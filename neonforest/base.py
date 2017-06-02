@@ -119,6 +119,9 @@ class Workspace():
         self.step_actors()
         self.step_processes()
 
+    def get_layer_ids(self):
+        return self.layer_order
+
     def num_layers(self):
         return len(self.layers)
 
@@ -131,6 +134,26 @@ class Workspace():
         if layer_id in self.layers:
             return self.layers[layer_id].set(x,y,v)
         return False
+
+    def render_to_curses(self, layer_id, screen):
+        screen.clear()
+        screen.border()
+        if layer_id in self.layers:
+            layer = self.layers[layer_id]
+            for y in range(self.height):
+                vy = y + 1
+                for x in range(self.width):
+                    vx = x + 1
+                    layer_v = layer.get(x,y)
+                    if layer.render_hint == None:
+                        if layer_v is not None:
+                            screen.addch(vy,vx,'X')
+                    elif layer.render_hint == "numeric":
+                        if layer_v > 0 and layer_v < 10:
+                            screen.addch(vy,vx,str(layer_v)[0])
+                        elif layer_v >= 10 :
+                            screen.addch(vy,vx,'+')
+
 
     def render_to_string(self, layer_id):
         output = ""
