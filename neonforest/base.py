@@ -1,3 +1,5 @@
+import copy
+
 class Layer():
 
     def __init__(self, width, height, name, default=None, offset_x = 0, offset_y = 0, render_hint=None):
@@ -19,6 +21,27 @@ class Layer():
             return True
         return False
 
+    def set_batch(self, mode, value, rel, idxl):
+        for idx in idxl:
+            # row mode
+            if mode == 0:
+                self.set(idx,rel,value)
+            # col mode
+            elif mode == 1:
+                self.set(rel,idx,value)
+
+    def get_neighbors(self, x, y):
+        neighbors = []
+        for rel_x in [-1,0,1]:
+            for rel_y in [-1,0,1]:
+                if not (rel_x == rel_y == 0):
+                    neighbors.append(self.get(x+rel_x, y+rel_y))
+        return neighbors
+
+    def overwrite(self, source_layer):
+        self.data = copy.deepcopy(source_layer.data)
+        return True
+
     def iter_all(self):
         return(LayerIterator(self))
 
@@ -28,6 +51,7 @@ class Layer():
         for x in range(self.width):
             self.data.append(list(column))
         return True
+
 
 class LayerIterator():
 
@@ -148,6 +172,9 @@ class Workspace():
                     if layer.render_hint == None:
                         if layer_v is not None:
                             screen.addch(vy,vx,'X')
+                    elif layer.render_hint == "bool":
+                        if layer_v is True:
+                            screen.addch(vy,vx,'X')
                     elif layer.render_hint == "numeric":
                         if layer_v > 0 and layer_v < 10:
                             screen.addch(vy,vx,str(layer_v)[0])
@@ -160,7 +187,7 @@ class Workspace():
         if layer_id in self.layers:
             layer = self.layers[layer_id]
 
-            if layer.render_hint == None or layer.render_hint=="numeric":
+            if layer.render_hint == None or layer.render_hint=="numeric" or layer.render_hint=="bool":
                 for x in range(self.width+2):
                     output = output + '-'
                 output = output+"\n"
@@ -171,6 +198,9 @@ class Workspace():
                         if layer.render_hint == None:
                             if layer.get(x,y) is not None:
                                 char = 'X'
+                        elif layer.render_hint == "bool":
+                            if layer.get(x,y) is True:
+                                char = 'T'
                         elif layer.render_hint == "numeric":
                             value = layer.get(x,y)
                             if value == 0:

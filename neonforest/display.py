@@ -7,12 +7,13 @@ STATUS_BAR_HEIGHT = 2
 
 class CursesDisplay():
 
-    def __init__(self, workspace):
+    def __init__(self, workspace, display_layer, start_paused=False, dt=0.1):
         self.workspace = workspace
         self.off_x = 0
         self.off_y = 0
-        self.paused = False
-        self.display_layer = 'ptrail'
+        self.paused = start_paused
+        self.display_layer = display_layer
+        self.dt = dt
         self.wkpadding = FourSides(top=1, bottom=1, right=1, left=1)
 
     def display(self):
@@ -58,7 +59,6 @@ class CursesDisplay():
                 exit()
             stdscr.nodelay(True)
 
-
     def loop(self,stdscr):
 
         stdscr_y, stdscr_x = stdscr.getmaxyx()
@@ -68,6 +68,8 @@ class CursesDisplay():
         curses.curs_set(0)
         last_t = time.time()
 
+        #first render of workspace
+        self.workspace.render_to_curses(self.display_layer, workpad)
         while True:
 
             stdscr_y, stdscr_x = stdscr.getmaxyx()
@@ -79,7 +81,7 @@ class CursesDisplay():
 
             # update simulation
             current_t = time.time()
-            if (current_t - last_t) > 0.1 and not self.paused:
+            if (current_t - last_t) > self.dt and not self.paused:
                 last_t = current_t
                 self.workspace.step_all()
                 self.workspace.render_to_curses(self.display_layer, workpad)
